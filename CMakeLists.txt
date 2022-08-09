@@ -3,7 +3,13 @@ cmake_minimum_required(VERSION 3.16...3.21)
 # Change obs-plugintemplate to your plugin's name in a machine-readable format
 # (e.g.: obs-myawesomeplugin) and set
 project(obs-soundboard VERSION 1.1.0)
-add_library(${CMAKE_PROJECT_NAME} MODULE)
+
+# Qt build stuff
+set(CMAKE_PREFIX_PATH "${QTDIR}")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON) 
 
 # Replace `Your Name Here` with the name (yours or your organization's) you want
 # to see as the author of the plugin (in the plugin's metadata itself and in the
@@ -19,69 +25,67 @@ set(MACOS_BUNDLEID "com.example.${CMAKE_PROJECT_NAME}")
 # Linux packages
 set(LINUX_MAINTAINER_EMAIL "claytong1214@gmail.com")
 
+# Setup target
+add_library(obs-soundboard MODULE)
+add_library(OBS::obs-soundboard ALIAS obs-soundboard)
+
 # Add your custom source files here - header files are optional and only
 # required for visibility e.g. in Xcode or Visual Studio
 target_sources(
-  ${CMAKE_PROJECT_NAME}
-  PRIVATE "${CMAKE_SOURCE_DIR}/src/Soundboard.ui"
-          "${CMAKE_SOURCE_DIR}/src/SoundEdit.ui"
-          "${CMAKE_SOURCE_DIR}/src/media-controls.ui"
-          "${CMAKE_SOURCE_DIR}/src/sound-data.cpp"
-          "${CMAKE_SOURCE_DIR}/src/sound-data.hpp"
-          "${CMAKE_SOURCE_DIR}/src/scene-tree.cpp"
-          "${CMAKE_SOURCE_DIR}/src/soundboard.cpp"
-          "${CMAKE_SOURCE_DIR}/src/volume-control.cpp"
-          "${CMAKE_SOURCE_DIR}/src/slider-absoluteset-style.cpp"
-          "${CMAKE_SOURCE_DIR}/src/slider-ignorewheel.cpp"
-          "${CMAKE_SOURCE_DIR}/src/adv-audio-control.cpp"
-          "${CMAKE_SOURCE_DIR}/src/media-controls.cpp"
-          "${CMAKE_SOURCE_DIR}/src/media-slider.cpp"
-          "${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h"
-          "${CMAKE_SOURCE_DIR}/src/scene-tree.hpp"
-          "${CMAKE_SOURCE_DIR}/src/soundboard.hpp"
-          "${CMAKE_SOURCE_DIR}/src/volume-control.hpp"
-          "${CMAKE_SOURCE_DIR}/src/slider-absoluteset-style.hpp"
-          "${CMAKE_SOURCE_DIR}/src/slider-ignorewheel.hpp"
-          "${CMAKE_SOURCE_DIR}/src/mute-checkbox.hpp"
-          "${CMAKE_SOURCE_DIR}/src/adv-audio-control.hpp"
-          "${CMAKE_SOURCE_DIR}/src/balance-slider.hpp"
-          "${CMAKE_SOURCE_DIR}/src/clickable-label.hpp"
-          "${CMAKE_SOURCE_DIR}/src/media-controls.hpp"
-          "${CMAKE_SOURCE_DIR}/src/media-slider.hpp")
+  obs-soundboard
+  PRIVATE src/Soundboard.ui
+          src/SoundEdit.ui
+          src/media-controls.ui
+          src/sound-data.cpp
+          src/sound-data.hpp
+          src/scene-tree.cpp
+          src/soundboard.cpp
+          src/volume-control.cpp
+          src/slider-absoluteset-style.cpp
+          src/slider-ignorewheel.cpp
+          src/adv-audio-control.cpp
+          src/media-controls.cpp
+          src/media-slider.cpp
+          src/plugin-macros.generated.h
+          src/scene-tree.hpp
+          src/soundboard.hpp
+          src/volume-control.hpp
+          src/slider-absoluteset-style.hpp
+          src/slider-ignorewheel.hpp
+          src/mute-checkbox.hpp
+          src/adv-audio-control.hpp
+          src/balance-slider.hpp
+          src/clickable-label.hpp
+          src/media-controls.hpp
+          src/media-slider.hpp)
 
 # /!\ TAKE NOTE: No need to edit things past this point /!\
 
-find_package(libobs REQUIRED)
-find_package(obs-frontend-api REQUIRED)
-include(cmake/ObsPluginHelpers.cmake)
 find_qt(COMPONENTS Widgets Core)
 
 configure_file(src/plugin-macros.h.in
-               ${CMAKE_SOURCE_DIR}/src/plugin-macros.generated.h)
+               src/plugin-macros.generated.h)
 
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-macros.generated.h)
+target_sources(obs-soundboard PRIVATE src/plugin-macros.generated.h)
 
 # --- Platform-independent build settings ---
-
-target_include_directories(${CMAKE_PROJECT_NAME}
-                           PRIVATE ${CMAKE_SOURCE_DIR}/src)
+target_include_directories(
+  obs-soundboard
+  PRIVATE ${Qt5Core_INCLUDES} ${Qt5Widgets_INCLUDES} "src")
 
 target_link_libraries(
-  ${CMAKE_PROJECT_NAME} PRIVATE OBS::libobs OBS::obs-frontend-api Qt::Core
-                                Qt::Widgets)
+  obs-soundboard
+  PRIVATE OBS::libobs
+          OBS::frontend-api
+          Qt::Core
+          Qt::Widgets)
 
-set_target_properties(
-  ${CMAKE_PROJECT_NAME}
-  PROPERTIES AUTOMOC ON
-             AUTOUIC ON
-             AUTORCC ON)
-
-target_compile_features(${CMAKE_PROJECT_NAME} PRIVATE cxx_std_17)
+target_compile_features(obs-soundboard PRIVATE cxx_std_17)
 
 # --- End of section ---
 
 # --- Windows-specific build settings and tasks ---
-if(OS_WINDOWS)
+if(WIN32)
   configure_file(cmake/bundle/windows/installer-Windows.iss.in
                  ${CMAKE_BINARY_DIR}/installer-Windows.generated.iss)
 
@@ -91,7 +95,7 @@ if(OS_WINDOWS)
   # --- End of section ---
 
   # -- macOS specific build settings and tasks --
-elseif(OS_MACOS)
+elseif(APPLE)
   configure_file(cmake/bundle/macos/installer-macos.pkgproj.in
                  ${CMAKE_BINARY_DIR}/installer-macos.generated.pkgproj)
 
@@ -100,19 +104,19 @@ elseif(OS_MACOS)
   set(MACOSX_PLUGIN_SHORT_VERSION_STRING "1")
 
   target_compile_options(
-    ${CMAKE_PROJECT_NAME}
+    obs-soundboard
     PRIVATE -Wall -Wextra -Werror-implicit-function-declaration -stdlib=libc++
             -fvisibility=default)
 
-  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
+  set_target_properties(obs-soundboard PROPERTIES PREFIX "")
   # --- End of section ---
 
   # --- Linux-specific build settings and tasks ---
 else()
-  target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE -Wall -Wextra)
+  target_compile_options(obs-soundboard PRIVATE -Wall -Wextra)
 
-  set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES PREFIX "")
+  set_target_properties(obs-soundboard PROPERTIES PREFIX "")
 endif()
 # --- End of section ---
 
-setup_plugin_target(${CMAKE_PROJECT_NAME})
+setup_plugin_target(obs-soundboard)
